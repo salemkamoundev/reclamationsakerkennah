@@ -1,0 +1,49 @@
+<div class="container mx-auto max-w-4xl">
+  <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+    <span class="bg-orange-100 text-orange-600 p-2 rounded-lg">🛡️</span>
+    Modération des commentaires
+  </h2>
+
+  <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden" *ngIf="pendingComments$ | async as comments; else loading">
+    
+    <div *ngIf="comments.length === 0" class="p-12 text-center text-slate-500">
+      <p class="text-lg">✅ Tout est propre !</p>
+      <p class="text-sm">Aucun commentaire en attente de modération.</p>
+    </div>
+
+    <table class="w-full text-left border-collapse" *ngIf="comments.length > 0">
+      <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+        <tr>
+          <th class="p-4 font-semibold border-b border-slate-100">Commentaire</th>
+          <th class="p-4 font-semibold border-b border-slate-100">Date</th>
+          <th class="p-4 font-semibold text-right border-b border-slate-100">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <tr *ngFor="let c of comments" class="hover:bg-slate-50 transition">
+          <td class="p-4">
+            <p class="text-slate-800 font-medium">{{ c.content }}</p>
+            <a [routerLink]="['/requests', c.requestId]" class="text-xs text-blue-500 hover:underline mt-1 inline-block">
+              Voir la réclamation associée
+            </a>
+          </td>
+          <td class="p-4 text-sm text-slate-500 whitespace-nowrap">
+            {{ c.createdAt | date:'short' }}
+          </td>
+          <td class="p-4 text-right space-x-2 whitespace-nowrap">
+            <button (click)="moderate(c.id, 'approved')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded text-xs font-bold hover:bg-emerald-200 transition">
+              Valider
+            </button>
+            <button (click)="moderate(c.id, 'rejected')" class="bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition">
+              Rejeter
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #loading>
+    <div class="p-8 text-center text-slate-500">Chargement des données...</div>
+  </ng-template>
+</div>

@@ -1,0 +1,63 @@
+<div class="container mx-auto max-w-4xl min-h-[60vh]">
+  
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900">Mon Espace Citoyen</h2>
+      <p class="text-slate-500 text-sm" *ngIf="auth.currentUser$ | async as user">
+        Connecté en tant que <span class="font-bold text-slate-700">{{ user.email }}</span>
+      </p>
+    </div>
+    <a routerLink="/requests/new" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded shadow-md text-sm font-bold transition">
+      + Nouveau Signalement
+    </a>
+  </div>
+
+  <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+    <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+      <h3 class="font-bold text-slate-700">Historique de mes signalements</h3>
+    </div>
+
+    <div *ngIf="myRequests$ | async as requests; else loading">
+      
+      <div *ngIf="requests.length === 0" class="p-12 text-center">
+        <div class="text-5xl mb-4">🌱</div>
+        <h4 class="text-lg font-bold text-slate-700">Vous n'avez rien signalé pour l'instant.</h4>
+        <p class="text-slate-500 mb-6">Participez à l'amélioration de Kerkennah !</p>
+        <a routerLink="/requests/new" class="text-emerald-600 hover:underline font-bold">Commencer maintenant</a>
+      </div>
+
+      <ul class="divide-y divide-slate-100" *ngIf="requests.length > 0">
+        <li *ngFor="let req of requests" class="p-6 hover:bg-slate-50 transition group">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            
+            <div class="flex-grow">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                  [ngClass]="{
+                    'bg-emerald-100 text-emerald-800': req.status === 'approved',
+                    'bg-yellow-100 text-yellow-800': req.status === 'pending',
+                    'bg-red-100 text-red-800': req.status === 'rejected'
+                  }">
+                  {{ req.status === 'approved' ? 'Validé' : (req.status === 'pending' ? 'En attente' : 'Rejeté') }}
+                </span>
+                <span class="text-xs text-slate-400">{{ req.createdAt | date:'mediumDate' }}</span>
+              </div>
+              <h4 class="font-bold text-lg text-slate-800 group-hover:text-emerald-700 transition">{{ req.title }}</h4>
+              <p class="text-sm text-slate-500 line-clamp-1">{{ req.description }}</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <a [routerLink]="['/requests', req.id]" class="text-slate-400 hover:text-emerald-600 font-medium text-sm border border-slate-200 hover:border-emerald-300 px-3 py-1 rounded transition bg-white">
+                Voir
+              </a>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <ng-template #loading>
+    <div class="p-12 text-center text-slate-500">Chargement de votre historique...</div>
+  </ng-template>
+</div>

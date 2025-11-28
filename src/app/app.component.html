@@ -1,0 +1,71 @@
+<div class="min-h-screen flex flex-col font-sans bg-slate-50 text-slate-800">
+  
+  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <a routerLink="/" class="flex items-center space-x-3 group">
+        <div class="w-10 h-10 bg-emerald-500 text-white flex items-center justify-center font-bold text-lg rounded group-hover:bg-emerald-400 transition">
+          RK
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">Réclamations<br/><span class="text-slate-400 text-sm font-normal">Kerkennah</span></h1>
+        </div>
+      </a>
+
+      <nav class="flex items-center space-x-6 text-sm font-medium">
+        <a routerLink="/requests" routerLinkActive="text-emerald-400" [routerLinkActiveOptions]="{exact: true}" class="hover:text-emerald-400 transition">
+          Signalements
+        </a>
+        
+        <ng-container *ngIf="auth.isAdmin$ | async">
+          <div class="hidden md:flex items-center space-x-4 border-l border-slate-700 pl-4 ml-2">
+            <span class="text-xs text-slate-500 uppercase tracking-widest font-bold">Admin</span>
+            
+            <a routerLink="/admin" routerLinkActive="text-orange-400" [routerLinkActiveOptions]="{exact: true}" class="hover:text-orange-300 transition flex items-center gap-1" title="Tableau de bord">
+              📊
+            </a>
+            <a routerLink="/admin/requests" routerLinkActive="text-orange-400" class="hover:text-orange-300 transition flex items-center gap-1">
+              📢 <span class="hidden lg:inline">Signalements</span>
+            </a>
+            <a routerLink="/admin/comments" routerLinkActive="text-orange-400" class="hover:text-orange-300 transition flex items-center gap-1">
+              💬 <span class="hidden lg:inline">Avis</span>
+            </a>
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="auth.currentUser$ | async as user; else loginBtn">
+          <div class="flex items-center space-x-4 border-l border-slate-700 pl-6">
+            <button (click)="logout()" class="text-slate-300 hover:text-white transition text-xs md:text-sm">
+              Déconnexion
+            </button>
+            
+            <a routerLink="/profile" class="flex items-center gap-2 group cursor-pointer" title="Mon Espace">
+              <div class="text-right hidden lg:block leading-tight">
+                <div class="text-xs text-slate-400">Bonjour,</div>
+                <div class="text-xs font-bold text-white group-hover:text-emerald-400 transition max-w-[100px] truncate">{{ user.email?.split('@')[0] }}</div>
+              </div>
+              <div class="w-8 h-8 rounded-full bg-emerald-700 group-hover:bg-emerald-600 transition flex items-center justify-center text-xs font-bold ring-2 ring-slate-800">
+                {{ user.email?.charAt(0) | uppercase }}
+              </div>
+            </a>
+
+          </div>
+        </ng-container>
+        <ng-template #loginBtn>
+          <a routerLink="/login" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded transition shadow-md">
+            Connexion
+          </a>
+        </ng-template>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-grow container mx-auto px-4 py-8">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="bg-slate-900 text-slate-500 py-6 mt-auto">
+    <div class="container mx-auto px-4 text-center text-sm">
+      <p>&copy; 2025 Reclamations Kerkennah. Une initiative citoyenne.</p>
+    </div>
+  </footer>
+</div>

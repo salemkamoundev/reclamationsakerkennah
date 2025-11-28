@@ -1,0 +1,114 @@
+<div class="container mx-auto max-w-6xl">
+  <div class="mb-8 flex justify-between items-end">
+    <div>
+      <h2 class="text-3xl font-bold text-slate-900">Tableau de Bord</h2>
+      <p class="text-slate-500">Vue d'ensemble de l'activité sur Kerkennah.</p>
+    </div>
+    <div class="text-sm text-slate-400">
+      Mise à jour en temps réel
+    </div>
+  </div>
+
+  <div *ngIf="stats$ | async as stats; else loading">
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold">
+          📊
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-slate-800">{{ stats.total }}</div>
+          <div class="text-xs text-slate-500 uppercase font-bold tracking-wider">Total Signalements</div>
+        </div>
+      </div>
+
+      <a routerLink="/admin/requests" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-400 hover:shadow-md transition cursor-pointer flex items-center gap-4 group">
+        <div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+          📢
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-slate-800">{{ stats.pending }}</div>
+          <div class="text-xs text-slate-500 uppercase font-bold tracking-wider">À Valider</div>
+        </div>
+      </a>
+
+      <a routerLink="/admin/comments" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-400 hover:shadow-md transition cursor-pointer flex items-center gap-4 group">
+        <div class="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-xl font-bold group-hover:scale-110 transition">
+          💬
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-slate-800">{{ stats.pendingCommentsCount }}</div>
+          <div class="text-xs text-slate-500 uppercase font-bold tracking-wider">Commentaires</div>
+        </div>
+      </a>
+
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold">
+          ✅
+        </div>
+        <div>
+          <div class="text-3xl font-bold text-slate-800">{{ stats.approved }}</div>
+          <div class="text-xs text-slate-500 uppercase font-bold tracking-wider">En ligne / Validés</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h3 class="font-bold text-slate-800 mb-6 border-b border-slate-100 pb-2">Répartition par Catégorie</h3>
+        
+        <div class="space-y-5">
+          <div *ngFor="let cat of stats.categoryStats">
+            <div class="flex justify-between text-sm mb-1">
+              <span class="font-medium text-slate-700">{{ cat.name }}</span>
+              <span class="text-slate-500">{{ cat.count }} ({{ cat.percentage }}%)</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+              <div class="bg-indigo-600 h-2.5 rounded-full" [style.width.%]="cat.percentage"></div>
+            </div>
+          </div>
+          
+          <div *ngIf="stats.categoryStats.length === 0" class="text-center text-slate-400 italic py-4">
+            Pas assez de données pour afficher les statistiques.
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 text-white p-6 rounded-xl shadow-lg">
+          <h3 class="font-bold text-lg mb-2">Administration</h3>
+          <p class="text-slate-300 text-sm mb-4">Bienvenue dans l'espace de gestion. N'oubliez pas de vérifier les commentaires régulièrement pour maintenir un espace sain.</p>
+          <div class="flex gap-3">
+             <a routerLink="/admin/requests" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded text-sm transition border border-white/20">
+               Gérer les signalements
+             </a>
+             <a routerLink="/" class="bg-emerald-500 hover:bg-emerald-400 px-4 py-2 rounded text-sm transition font-bold text-white">
+               Voir le site public
+             </a>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+           <h3 class="font-bold text-slate-800 mb-4">Taux de Rejet</h3>
+           <div class="flex items-center gap-4">
+             <div class="text-4xl font-bold text-red-500">{{ stats.rejected }}</div>
+             <div class="text-sm text-slate-500 leading-tight">
+               Signalements rejetés<br>depuis le lancement.
+             </div>
+           </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <ng-template #loading>
+    <div class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+    </div>
+  </ng-template>
+</div>

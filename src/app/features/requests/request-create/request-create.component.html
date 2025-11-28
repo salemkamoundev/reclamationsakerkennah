@@ -1,0 +1,72 @@
+<div class="max-w-3xl mx-auto">
+  <div class="mb-6">
+    <a routerLink="/requests" class="text-slate-500 hover:text-slate-800 text-sm mb-2 inline-block">&larr; Annuler et retour</a>
+    <h2 class="text-2xl font-bold text-slate-900">Nouveau Signalement</h2>
+    <p class="text-slate-500 text-sm">Décrivez le problème et joignez une photo si possible.</p>
+  </div>
+
+  <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-8">
+    
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Titre</label>
+        <input type="text" formControlName="title" 
+          class="w-full px-4 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none transition"
+          placeholder="Ex: Poteau électrique tombé">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Catégorie</label>
+        <select formControlName="category" class="w-full px-4 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+          <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Photo (Optionnel)</label>
+        <div class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:bg-slate-50 transition cursor-pointer relative">
+          <input type="file" (change)="onFileSelected($event)" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+          <div *ngIf="!imagePreview" class="text-slate-500 text-sm">
+            <span class="block text-2xl mb-1">📷</span>
+            Cliquez pour ajouter une image
+          </div>
+          <div *ngIf="imagePreview" class="relative">
+            <img [src]="imagePreview" class="h-32 mx-auto rounded object-cover shadow-sm">
+            <span class="absolute top-0 right-0 bg-emerald-500 text-white text-xs px-2 py-1 rounded-bl">Modifiée</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
+        <textarea formControlName="description" rows="4"
+          class="w-full px-4 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none transition"
+          placeholder="Décrivez la situation..."></textarea>
+      </div>
+
+      <div class="pt-4">
+        <button type="submit" 
+          [disabled]="form.invalid || isSubmitting"
+          class="w-full bg-slate-900 text-white py-3 rounded hover:bg-emerald-600 transition font-bold disabled:opacity-50 disabled:cursor-not-allowed flex justify-center">
+          <span *ngIf="isSubmitting" class="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+          {{ isSubmitting ? 'Envoi...' : 'Envoyer le signalement' }}
+        </button>
+      </div>
+    </form>
+
+    <div class="flex flex-col h-full">
+      <label class="block text-sm font-medium text-slate-700 mb-2">
+        Localisation <span class="text-emerald-600 font-normal text-xs">(Cliquez sur la carte)</span>
+      </label>
+      <div class="flex-grow min-h-[300px] border-2 border-slate-200 rounded-lg overflow-hidden relative">
+        <app-request-map 
+          [lat]="selectedLat" 
+          [lng]="selectedLng" 
+          [readonly]="false"
+          (coordsSelected)="updateCoords($event)">
+        </app-request-map>
+      </div>
+    </div>
+
+  </div>
+</div>

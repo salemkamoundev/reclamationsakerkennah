@@ -1,0 +1,43 @@
+<div class="flex justify-center items-center min-h-[60vh]">
+  <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md border border-slate-100">
+    <h2 class="text-2xl font-bold text-slate-800 mb-2">
+      {{ isRegisterMode ? 'Créer un compte' : 'Connexion' }}
+    </h2>
+    <p class="text-slate-500 mb-6 text-sm">
+      {{ isRegisterMode ? 'Rejoignez la communauté citoyenne.' : 'Accédez à votre espace pour signaler un problème.' }}
+    </p>
+
+    <div *ngIf="errorMsg" class="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm border border-red-100">
+      {{ errorMsg }}
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+        <input type="email" formControlName="email" 
+          class="w-full px-4 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+          placeholder="exemple@kerkennah.tn">
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Mot de passe</label>
+        <input type="password" formControlName="password" 
+          class="w-full px-4 py-2 border border-slate-300 rounded focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition"
+          placeholder="••••••">
+      </div>
+
+      <button type="submit" 
+        [disabled]="form.invalid"
+        class="w-full bg-slate-900 text-white py-2 rounded hover:bg-emerald-600 transition duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ isRegisterMode ? "S'inscrire" : "Se connecter" }}
+      </button>
+    </form>
+
+    <div class="mt-6 text-center text-sm text-slate-600">
+      {{ isRegisterMode ? 'Déjà un compte ?' : 'Pas encore de compte ?' }}
+      <button (click)="toggleMode()" class="text-emerald-600 font-bold hover:underline ml-1">
+        {{ isRegisterMode ? 'Connectez-vous' : 'Inscrivez-vous' }}
+      </button>
+    </div>
+  </div>
+</div>
