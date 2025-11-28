@@ -11,6 +11,9 @@ import { RequestMapComponent } from './features/requests/request-map/request-map
 import { RequestCreateComponent } from './features/requests/request-create/request-create.component';
 import { UserDashboardComponent } from './features/auth/user-dashboard/user-dashboard.component';
 import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
+import { ToastComponent } from './shared/components/toast/toast.component';
+import { NotFoundComponent } from './core/components/not-found/not-found.component';
+import { AboutComponent } from './features/about/about.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +25,10 @@ import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-
     RequestMapComponent,
     RequestCreateComponent,
     UserDashboardComponent,
-    AdminDashboardComponent
+    AdminDashboardComponent,
+    ToastComponent,
+    NotFoundComponent,
+    AboutComponent
   ],
   imports: [
     BrowserModule,

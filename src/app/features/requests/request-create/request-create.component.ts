@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { RequestsService } from '../../../core/services/requests.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { StorageService } from '../../../core/services/storage.service';
+import { ToastService } from '../../../core/services/toast.service'; // Import
 import { take } from 'rxjs';
 import { RequestCategory } from '../../../core/models/request.model';
 
@@ -17,6 +18,7 @@ export class RequestCreateComponent {
   requestsService = inject(RequestsService);
   auth = inject(AuthService);
   storage = inject(StorageService);
+  toast = inject(ToastService); // Inject
   router = inject(Router);
 
   categories: RequestCategory[] = ['Voirie', 'Eclairage', 'Déchets', 'Sécurité', 'Autre'];
@@ -42,8 +44,6 @@ export class RequestCreateComponent {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;
-      
-      // Créer une preview locale
       const reader = new FileReader();
       reader.onload = () => {
         this.imagePreview = reader.result as string;
@@ -60,30 +60,30 @@ export class RequestCreateComponent {
       if (!user) return;
       try {
         let imageUrl = '';
-        
-        // 1. Upload de l'image si présente
         if (this.selectedFile) {
           imageUrl = await this.storage.uploadFile(this.selectedFile);
         }
 
-        // 2. Sauvegarde Firestore
         await this.requestsService.addRequest({
           title: this.form.value.title!,
           description: this.form.value.description!,
           category: this.form.value.category as RequestCategory,
           lat: this.selectedLat,
           lng: this.selectedLng,
-          imageUrl: imageUrl, // Ajout de l'URL
+          imageUrl: imageUrl,
           createdBy: user.uid,
           authorEmail: user.email || 'Anonyme',
           status: 'pending',
           createdAt: new Date()
         });
 
+        // Utilisation du Toast
+        this.toast.show('success', 'Signalement envoyé avec succès ! Il sera validé par un modérateur.');
+        
         this.router.navigate(['/requests']);
       } catch (err) {
         console.error(err);
-        alert("Erreur lors de l'envoi.");
+        this.toast.show('error', 'Une erreur est survenue lors de l\'envoi.');
         this.isSubmitting = false;
       }
     });

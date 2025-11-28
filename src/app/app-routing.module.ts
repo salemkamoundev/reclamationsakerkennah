@@ -7,7 +7,9 @@ import { LoginComponent } from './features/auth/login/login.component';
 import { UserDashboardComponent } from './features/auth/user-dashboard/user-dashboard.component';
 import { PendingCommentsComponent } from './features/admin/pending-comments/pending-comments.component';
 import { AdminRequestsComponent } from './features/admin/admin-requests/admin-requests.component';
-import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component'; // Import
+import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
+import { AboutComponent } from './features/about/about.component';
+import { NotFoundComponent } from './core/components/not-found/not-found.component';
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
 
@@ -18,11 +20,15 @@ const routes: Routes = [
   { path: 'requests/:id', component: RequestDetailComponent },
   { path: 'login', component: LoginComponent },
   { path: 'profile', component: UserDashboardComponent, canActivate: [authGuard] },
+  { path: 'about', component: AboutComponent },
   
-  // Routes Admin
-  { path: 'admin', component: AdminDashboardComponent, canActivate: [adminGuard] }, // Dashboard racine
+  // Admin
+  { path: 'admin', component: AdminDashboardComponent, canActivate: [adminGuard] },
   { path: 'admin/requests', component: AdminRequestsComponent, canActivate: [adminGuard] },
-  { path: 'admin/comments', component: PendingCommentsComponent, canActivate: [adminGuard] }
+  { path: 'admin/comments', component: PendingCommentsComponent, canActivate: [adminGuard] },
+
+  // Wildcard (404) - Toujours en dernier !
+  { path: '**', component: NotFoundComponent }
 ];
 
 @NgModule({
