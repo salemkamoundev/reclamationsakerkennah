@@ -1,34 +1,48 @@
 import { Component, AfterViewInit, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import * as L from 'leaflet';
+import { Request } from '../../../core/models/request.model';
 
 @Component({
   selector: 'app-request-map',
-  template: '<div id="map" class="h-64 w-full rounded-lg shadow-inner border border-slate-300"></div>',
-  styles: []
+  template: '<div id="map" class="h-full w-full rounded-lg shadow-inner border border-slate-300 z-0"></div>',
+  styles: [
+    ':host { display: block; height: 100%; width: 100%; }'
+  ]
 })
 export class RequestMapComponent implements AfterViewInit, OnChanges {
-  @Input() lat: number = 34.71; // Centre de Kerkennah par défaut
+  // Mode 1 : Point unique (Détail / Création)
+  @Input() lat: number = 34.71;
   @Input() lng: number = 11.17;
+  
+  // Mode 2 : Liste de points (Vue Globale)
+  @Input() requests: Request[] | null = null;
+  
   @Input() readonly: boolean = true;
   @Output() coordsSelected = new EventEmitter<{lat: number, lng: number}>();
 
   private map!: L.Map;
-  private marker?: L.Marker;
+  private markersLayer = L.layerGroup(); // Groupe pour gérer les marqueurs
 
   ngAfterViewInit(): void {
     this.initMap();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Si les coordonnées changent et que la carte est prête, on déplace le marqueur
-    if (this.map && (changes['lat'] || changes['lng'])) {
-      this.updateMarker(this.lat, this.lng);
-      this.map.setView([this.lat, this.lng], 12);
+    if (!this.map) return;
+
+    // Cas 1 : Changement de coordonnées unique
+    if (changes['lat'] || changes['lng']) {
+      this.refreshSingleMarker();
+    }
+
+    // Cas 2 : Changement de la liste de requêtes
+    if (changes['requests'] && this.requests) {
+      this.refreshMultipleMarkers();
     }
   }
 
   private initMap(): void {
-    // Fix des icônes Leaflet dans Angular/Webpack
+    // Fix icônes Leaflet
     const iconRetinaUrl = 'assets/marker-icon-2x.png';
     const iconUrl = 'assets/marker-icon.png';
     const shadowUrl = 'assets/marker-shadow.png';
@@ -44,7 +58,7 @@ export class RequestMapComponent implements AfterViewInit, OnChanges {
     });
     L.Marker.prototype.options.icon = iconDefault;
 
-    // Création de la carte
+    // Init Map
     this.map = L.map('map').setView([this.lat, this.lng], 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -52,26 +66,61 @@ export class RequestMapComponent implements AfterViewInit, OnChanges {
       attribution: '© OpenStreetMap'
     }).addTo(this.map);
 
-    // Ajout du marqueur initial
-    if (this.lat && this.lng) {
-      this.updateMarker(this.lat, this.lng);
+    this.markersLayer.addTo(this.map);
+
+    // Initialisation du contenu
+    if (this.requests) {
+      this.refreshMultipleMarkers();
+    } else {
+      this.refreshSingleMarker();
     }
 
-    // Gestion du clic (seulement si non readonly)
-    if (!this.readonly) {
+    // Gestion du clic (seulement si pas readonly et pas en mode multi)
+    if (!this.readonly && !this.requests) {
       this.map.on('click', (e: any) => {
         const { lat, lng } = e.latlng;
-        this.updateMarker(lat, lng);
+        this.lat = lat;
+        this.lng = lng;
+        this.refreshSingleMarker();
         this.coordsSelected.emit({ lat, lng });
       });
     }
   }
 
-  private updateMarker(lat: number, lng: number) {
-    if (this.marker) {
-      this.marker.setLatLng([lat, lng]);
-    } else {
-      this.marker = L.marker([lat, lng]).addTo(this.map);
+  private refreshSingleMarker() {
+    this.markersLayer.clearLayers();
+    const marker = L.marker([this.lat, this.lng]);
+    this.markersLayer.addLayer(marker);
+    this.map.setView([this.lat, this.lng], this.map.getZoom());
+  }
+
+  private refreshMultipleMarkers() {
+    this.markersLayer.clearLayers();
+    
+    if (!this.requests || this.requests.length === 0) return;
+
+    const bounds = L.latLngBounds([]);
+
+    this.requests.forEach(req => {
+      const marker = L.marker([req.lat, req.lng]);
+      
+      // Popup avec lien HTML basique
+      const popupContent = \`
+        <div style="text-align:center">
+          <strong style="font-size:14px">\${req.title}</strong><br/>
+          <span style="font-size:11px; color:#666">\${req.category || 'Autre'}</span><br/>
+          <a href="/requests/\${req.id}" style="display:inline-block; margin-top:5px; color:#10b981; font-weight:bold; text-decoration:none">Voir le détail</a>
+        </div>
+      \`;
+      
+      marker.bindPopup(popupContent);
+      this.markersLayer.addLayer(marker);
+      bounds.extend([req.lat, req.lng]);
+    });
+
+    // Ajuster le zoom pour tout voir
+    if (bounds.isValid()) {
+      this.map.fitBounds(bounds, { padding: [50, 50] });
     }
   }
 }

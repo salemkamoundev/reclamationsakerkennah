@@ -15,26 +15,23 @@ export class RequestListComponent {
   seeder = inject(SeederService);
   loadingSeed = false;
 
-  // Filtres Réactifs
+  // État de la vue : 'list' ou 'map'
+  viewMode: 'list' | 'map' = 'list';
+
   searchTerm$ = new BehaviorSubject<string>('');
   categoryFilter$ = new BehaviorSubject<string>('All');
-
-  // Categories pour le select
   categories: string[] = ['All', 'Voirie', 'Eclairage', 'Déchets', 'Sécurité', 'Autre'];
 
-  // Flux de données combiné : Requêtes Firestore + Filtre Recherche + Filtre Catégorie
   vm$ = combineLatest([
     this.requestsService.getApprovedRequests(),
     this.searchTerm$,
     this.categoryFilter$
   ]).pipe(
     map(([requests, term, category]) => {
-      // 1. Filtrer par Catégorie
       let filtered = (category === 'All') 
         ? requests 
         : requests.filter(r => r.category === category);
 
-      // 2. Filtrer par Recherche Texte
       if (term) {
         const lowerTerm = term.toLowerCase();
         filtered = filtered.filter(r => 
@@ -55,7 +52,10 @@ export class RequestListComponent {
     this.categoryFilter$.next(cat);
   }
 
-  // Seeder logic
+  setViewMode(mode: 'list' | 'map') {
+    this.viewMode = mode;
+  }
+
   async generateDemoData() {
     if(!confirm("Générer des données de test ?")) return;
     this.loadingSeed = true;

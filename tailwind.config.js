@@ -6,8 +6,8 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'brand-dark': '#0f172a', // Slate 900
-        'brand-green': '#10b981', // Emerald 500
+        'brand-dark': '#0f172a',
+        'brand-green': '#10b981',
       }
     },
   },
