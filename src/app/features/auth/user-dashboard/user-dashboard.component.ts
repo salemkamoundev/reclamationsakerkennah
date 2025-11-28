@@ -6,15 +6,14 @@ import { switchMap, of } from 'rxjs';
 @Component({
   selector: 'app-user-dashboard',
   templateUrl: './user-dashboard.component.html',
-  styleUrls: ['./user-dashboard.component.css']
+  standalone: false
 })
 export class UserDashboardComponent {
   auth = inject(AuthService);
   requestsService = inject(RequestsService);
 
-  // On switchMap depuis l'utilisateur connecté vers ses requêtes
   myRequests$ = this.auth.currentUser$.pipe(
-    switchMap(user => {
+    switchMap((user: any) => {
       if (!user) return of([]);
       return this.requestsService.getUserRequests(user.uid);
     })

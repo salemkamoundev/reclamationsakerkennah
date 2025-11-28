@@ -1,18 +1,21 @@
-import { NgModule } from '@angular/core';
+import { NgModule, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { CommonModule, UpperCasePipe } from '@angular/common';
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { RouterModule } from '@angular/router';
 
 // Firebase
 import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
 import { provideAuth, getAuth } from '@angular/fire/auth';
 import { provideFirestore, getFirestore } from '@angular/fire/firestore';
-import { provideStorage, getStorage } from '@angular/fire/storage'; // AJOUT
+import { provideStorage, getStorage } from '@angular/fire/storage';
 import { environment } from '../environments/environment';
 
-// Components (Imports automatiques via CLI normalement, mais on les réinclus pour être sûr)
+// Components
 import { RequestListComponent } from './features/requests/request-list/request-list.component';
 import { RequestDetailComponent } from './features/requests/request-detail/request-detail.component';
 import { RequestCreateComponent } from './features/requests/request-create/request-create.component';
@@ -21,6 +24,10 @@ import { LoginComponent } from './features/auth/login/login.component';
 import { UserDashboardComponent } from './features/auth/user-dashboard/user-dashboard.component';
 import { PendingCommentsComponent } from './features/admin/pending-comments/pending-comments.component';
 import { AdminRequestsComponent } from './features/admin/admin-requests/admin-requests.component';
+import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
+import { ToastComponent } from './shared/components/toast/toast.component';
+import { NotFoundComponent } from './core/components/not-found/not-found.component';
+import { AboutComponent } from './features/about/about.component';
 
 @NgModule({
   declarations: [
@@ -32,20 +39,33 @@ import { AdminRequestsComponent } from './features/admin/admin-requests/admin-re
     LoginComponent,
     UserDashboardComponent,
     PendingCommentsComponent,
-    AdminRequestsComponent
+    AdminRequestsComponent,
+    AdminDashboardComponent,
+    ToastComponent,
+    NotFoundComponent,
+    AboutComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
+    RouterModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
+    CommonModule,
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    })
+  ],
+  providers: [
+    UpperCasePipe,
+    // C'EST ICI QUE CA DOIT ETRE :
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
-    provideStorage(() => getStorage()) // AJOUT
+    provideStorage(() => getStorage())
   ],
-  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

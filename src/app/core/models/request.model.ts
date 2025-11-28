@@ -7,7 +7,7 @@ export interface Request {
   title: string;
   description: string;
   category?: RequestCategory;
-  imageUrl?: string; // URL de l'image stockée
+  imageUrl?: string;
   status: 'pending' | 'approved' | 'rejected';
   lat: number;
   lng: number;

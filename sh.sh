@@ -1,52 +1,86 @@
 #!/bin/bash
 
-echo "🚑 Lancement de la procédure de stabilisation..."
+echo "🚑 Correction critique de l'injection Firebase dans AppModule..."
 
-# 1. Suppression des paquets problématiques
-echo "🗑️ Suppression des versions conflictuelles..."
-npm uninstall tailwindcss @tailwindcss/postcss postcss autoprefixer
-rm -rf node_modules
-rm -rf .angular
-rm -f package-lock.json
+# 1. Réécriture de AppModule
+# CHANGEMENT MAJEUR : On déplace les 'provide...' de 'imports' vers 'providers'
+cat << 'EOF' > src/app/app.module.ts
+import { NgModule, isDevMode } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { CommonModule, UpperCasePipe } from '@angular/common';
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { RouterModule } from '@angular/router';
 
-# 2. Installation forcée des versions STABLES (v3)
-# On verrouille tailwindcss sur la version 3.4.x qui est 100% compatible Angular
-echo "📦 Installation des versions stables..."
-npm install -D tailwindcss@3.4.17 postcss@8.4.35 autoprefixer@10.4.17
-npm install
+// Firebase
+import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideAuth, getAuth } from '@angular/fire/auth';
+import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { provideStorage, getStorage } from '@angular/fire/storage';
+import { environment } from '../environments/environment';
 
-# 3. Réinitialisation de la config PostCSS pour la v3 standard
-# Note : On revient à la syntaxe classique 'tailwindcss' au lieu de '@tailwindcss/postcss'
-echo "⚙️ Restauration de postcss.config.js standard..."
-cat << 'EOF' > postcss.config.js
-module.exports = {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
-EOF
+// Components
+import { RequestListComponent } from './features/requests/request-list/request-list.component';
+import { RequestDetailComponent } from './features/requests/request-detail/request-detail.component';
+import { RequestCreateComponent } from './features/requests/request-create/request-create.component';
+import { RequestMapComponent } from './features/requests/request-map/request-map.component';
+import { LoginComponent } from './features/auth/login/login.component';
+import { UserDashboardComponent } from './features/auth/user-dashboard/user-dashboard.component';
+import { PendingCommentsComponent } from './features/admin/pending-comments/pending-comments.component';
+import { AdminRequestsComponent } from './features/admin/admin-requests/admin-requests.component';
+import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
+import { ToastComponent } from './shared/components/toast/toast.component';
+import { NotFoundComponent } from './core/components/not-found/not-found.component';
+import { AboutComponent } from './features/about/about.component';
 
-# 4. Vérification de tailwind.config.js
-# On s'assure qu'il est bien présent et configuré
-echo "📝 Vérification de tailwind.config.js..."
-cat << 'EOF' > tailwind.config.js
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    "./src/**/*.{html,ts}",
+@NgModule({
+  declarations: [
+    AppComponent,
+    RequestListComponent,
+    RequestDetailComponent,
+    RequestCreateComponent,
+    RequestMapComponent,
+    LoginComponent,
+    UserDashboardComponent,
+    PendingCommentsComponent,
+    AdminRequestsComponent,
+    AdminDashboardComponent,
+    ToastComponent,
+    NotFoundComponent,
+    AboutComponent
   ],
-  theme: {
-    extend: {
-      colors: {
-        'brand-dark': '#0f172a',
-        'brand-green': '#10b981',
-      }
-    },
-  },
-  plugins: [],
-}
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    RouterModule,
+    FormsModule,
+    ReactiveFormsModule,
+    HttpClientModule,
+    CommonModule,
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    })
+  ],
+  providers: [
+    UpperCasePipe,
+    // C'EST ICI QUE CA DOIT ETRE :
+    provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
+    provideAuth(() => getAuth()),
+    provideFirestore(() => getFirestore()),
+    provideStorage(() => getStorage())
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
 EOF
 
-echo "✅ Stabilisation terminée."
-echo "👉 Lance 'ng serve' maintenant. Cela DOIT fonctionner."
+# 2. Nettoyage du cache pour forcer la prise en compte
+echo "🧹 Nettoyage du cache Angular..."
+rm -rf .angular
+
+echo "✅ Correction appliquée."
+echo "👉 Arrête le serveur (Ctrl+C) et lance : ng serve"
