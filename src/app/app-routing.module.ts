@@ -12,13 +12,17 @@ import { AboutComponent } from './features/about/about.component';
 import { NotFoundComponent } from './core/components/not-found/not-found.component';
 import { adminGuard } from './core/guards/admin.guard';
 import { authGuard } from './core/guards/auth.guard';
+import { loginRedirectGuard } from './core/guards/login-redirect.guard'; // Import
 
 const routes: Routes = [
   { path: '', redirectTo: '/requests', pathMatch: 'full' },
   { path: 'requests', component: RequestListComponent },
   { path: 'requests/new', component: RequestCreateComponent, canActivate: [authGuard] },
   { path: 'requests/:id', component: RequestDetailComponent },
-  { path: 'login', component: LoginComponent },
+  
+  // Application du guard : Si connecté, impossible d'aller sur /login
+  { path: 'login', component: LoginComponent, canActivate: [loginRedirectGuard] },
+  
   { path: 'profile', component: UserDashboardComponent, canActivate: [authGuard] },
   { path: 'about', component: AboutComponent },
   
@@ -27,7 +31,6 @@ const routes: Routes = [
   { path: 'admin/requests', component: AdminRequestsComponent, canActivate: [adminGuard] },
   { path: 'admin/comments', component: PendingCommentsComponent, canActivate: [adminGuard] },
 
-  // Wildcard (404) - Toujours en dernier !
   { path: '**', component: NotFoundComponent }
 ];
 

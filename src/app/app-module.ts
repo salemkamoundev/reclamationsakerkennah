@@ -1,4 +1,4 @@
-import { NgModule, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { NgModule, provideBrowserGlobalErrorListeners, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing-module';
@@ -14,6 +14,7 @@ import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-
 import { ToastComponent } from './shared/components/toast/toast.component';
 import { NotFoundComponent } from './core/components/not-found/not-found.component';
 import { AboutComponent } from './features/about/about.component';
+import { ServiceWorkerModule } from '@angular/service-worker';
 
 @NgModule({
   declarations: [
@@ -32,7 +33,13 @@ import { AboutComponent } from './features/about/about.component';
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      // Register the ServiceWorker as soon as the application is stable
+      // or after 30 seconds (whichever comes first).
+      registrationStrategy: 'registerWhenStable:30000'
+    })
   ],
   providers: [
     provideBrowserGlobalErrorListeners()
