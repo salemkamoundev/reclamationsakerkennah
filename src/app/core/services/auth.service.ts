@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, user } from '@angular/fire/auth';
-import { Firestore, doc, docData, setDoc } from '@angular/fire/firestore';
+import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, user, GoogleAuthProvider, signInWithPopup } from '@angular/fire/auth';
+import { Firestore, doc, docData, setDoc, getDoc } from '@angular/fire/firestore';
 import { Observable, of, switchMap } from 'rxjs';
 
 @Injectable({
@@ -16,24 +16,49 @@ export class AuthService {
     switchMap(user => {
       if (!user) return of(false);
       const userDoc = doc(this.firestore, `users/${user.uid}`);
-      // Force le typage 'any' pour éviter les conflits TypeScript stricts
       return docData(userDoc) as Observable<any>;
     }),
     switchMap(data => of(!!data?.isAdmin))
   );
 
-  async register(email: string, pass: string) {
-    const creds = await createUserWithEmailAndPassword(this.auth, email, pass);
-    const userDoc = doc(this.firestore, `users/${creds.user.uid}`);
-    await setDoc(userDoc, { email, role: 'user', createdAt: new Date() });
-    return creds;
-  }
-
+  // Connexion Email/Password
   async login(email: string, pass: string) {
     return await signInWithEmailAndPassword(this.auth, email, pass);
   }
 
+  // Inscription Email/Password
+  async register(email: string, pass: string) {
+    const creds = await createUserWithEmailAndPassword(this.auth, email, pass);
+    await this.createUserProfile(creds.user);
+    return creds;
+  }
+
+  // Connexion Google (Nouveau)
+  async loginWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    const creds = await signInWithPopup(this.auth, provider);
+    await this.createUserProfile(creds.user);
+    return creds;
+  }
+
   async logout() {
     return await signOut(this.auth);
+  }
+
+  // Helper pour créer/mettre à jour le profil user dans Firestore
+  private async createUserProfile(user: any) {
+    const userDocRef = doc(this.firestore, `users/${user.uid}`);
+    const userSnapshot = await getDoc(userDocRef);
+
+    // Si l'utilisateur n'existe pas encore dans Firestore, on le crée
+    if (!userSnapshot.exists()) {
+      await setDoc(userDocRef, { 
+        email: user.email, 
+        role: 'user', 
+        createdAt: new Date(),
+        displayName: user.displayName || '',
+        photoURL: user.photoURL || ''
+      });
+    }
   }
 }

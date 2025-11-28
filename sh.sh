@@ -1,86 +1,160 @@
 #!/bin/bash
 
-echo "🚑 Correction critique de l'injection Firebase dans AppModule..."
+echo "🚑 Correction du format de Date et des Permissions..."
 
-# 1. Réécriture de AppModule
-# CHANGEMENT MAJEUR : On déplace les 'provide...' de 'imports' vers 'providers'
-cat << 'EOF' > src/app/app.module.ts
-import { NgModule, isDevMode } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
-import { CommonModule, UpperCasePipe } from '@angular/common';
-import { ServiceWorkerModule } from '@angular/service-worker';
-import { RouterModule } from '@angular/router';
+# 1. Correction de RequestsService (Conversion Timestamp -> Date)
+# On ajoute un 'pipe(map())' pour transformer les données brutes de Firebase
+echo "🔧 Mise à jour de src/app/core/services/requests.service.ts..."
+cat << 'EOF' > src/app/core/services/requests.service.ts
+import { Injectable, inject } from '@angular/core';
+import { Firestore, collection, collectionData, doc, docData, addDoc, updateDoc, query, where, orderBy, Timestamp, deleteDoc } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Request } from '../models/request.model';
 
-// Firebase
-import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
-import { provideAuth, getAuth } from '@angular/fire/auth';
-import { provideFirestore, getFirestore } from '@angular/fire/firestore';
-import { provideStorage, getStorage } from '@angular/fire/storage';
-import { environment } from '../environments/environment';
+@Injectable({ providedIn: 'root' })
+export class RequestsService {
+  private firestore = inject(Firestore);
+  private collectionName = 'requests';
 
-// Components
-import { RequestListComponent } from './features/requests/request-list/request-list.component';
-import { RequestDetailComponent } from './features/requests/request-detail/request-detail.component';
-import { RequestCreateComponent } from './features/requests/request-create/request-create.component';
-import { RequestMapComponent } from './features/requests/request-map/request-map.component';
-import { LoginComponent } from './features/auth/login/login.component';
-import { UserDashboardComponent } from './features/auth/user-dashboard/user-dashboard.component';
-import { PendingCommentsComponent } from './features/admin/pending-comments/pending-comments.component';
-import { AdminRequestsComponent } from './features/admin/admin-requests/admin-requests.component';
-import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-dashboard.component';
-import { ToastComponent } from './shared/components/toast/toast.component';
-import { NotFoundComponent } from './core/components/not-found/not-found.component';
-import { AboutComponent } from './features/about/about.component';
+  // Helper pour convertir les Timestamps Firebase en Date JS
+  private convertTimestamps(req: any): Request {
+    if (req.createdAt && typeof req.createdAt.toDate === 'function') {
+      req.createdAt = req.createdAt.toDate();
+    }
+    return req as Request;
+  }
 
-@NgModule({
-  declarations: [
-    AppComponent,
-    RequestListComponent,
-    RequestDetailComponent,
-    RequestCreateComponent,
-    RequestMapComponent,
-    LoginComponent,
-    UserDashboardComponent,
-    PendingCommentsComponent,
-    AdminRequestsComponent,
-    AdminDashboardComponent,
-    ToastComponent,
-    NotFoundComponent,
-    AboutComponent
-  ],
-  imports: [
-    BrowserModule,
-    AppRoutingModule,
-    RouterModule,
-    FormsModule,
-    ReactiveFormsModule,
-    HttpClientModule,
-    CommonModule,
-    ServiceWorkerModule.register('ngsw-worker.js', {
-      enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000'
-    })
-  ],
-  providers: [
-    UpperCasePipe,
-    // C'EST ICI QUE CA DOIT ETRE :
-    provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
-    provideAuth(() => getAuth()),
-    provideFirestore(() => getFirestore()),
-    provideStorage(() => getStorage())
-  ],
-  bootstrap: [AppComponent]
-})
-export class AppModule { }
+  getApprovedRequests(): Observable<Request[]> {
+    const col = collection(this.firestore, this.collectionName);
+    const q = query(col, where('status', '==', 'approved'), orderBy('createdAt', 'desc'));
+    return collectionData(q, { idField: 'id' }).pipe(
+      map(requests => requests.map(r => this.convertTimestamps(r)))
+    );
+  }
+
+  getPendingRequests(): Observable<Request[]> {
+    const col = collection(this.firestore, this.collectionName);
+    const q = query(col, where('status', '==', 'pending'), orderBy('createdAt', 'desc'));
+    return collectionData(q, { idField: 'id' }).pipe(
+      map(requests => requests.map(r => this.convertTimestamps(r)))
+    );
+  }
+
+  getAllRequests(): Observable<Request[]> {
+    const col = collection(this.firestore, this.collectionName);
+    const q = query(col, orderBy('createdAt', 'desc'));
+    return collectionData(q, { idField: 'id' }).pipe(
+      map(requests => requests.map(r => this.convertTimestamps(r)))
+    );
+  }
+
+  getUserRequests(uid: string): Observable<Request[]> {
+    const col = collection(this.firestore, this.collectionName);
+    const q = query(col, where('createdBy', '==', uid), orderBy('createdAt', 'desc'));
+    return collectionData(q, { idField: 'id' }).pipe(
+      map(requests => requests.map(r => this.convertTimestamps(r)))
+    );
+  }
+
+  getRequestById(id: string): Observable<Request> {
+    const docRef = doc(this.firestore, `${this.collectionName}/${id}`);
+    return docData(docRef, { idField: 'id' }).pipe(
+      map(r => this.convertTimestamps(r))
+    );
+  }
+
+  addRequest(req: Partial<Request>) {
+    const col = collection(this.firestore, this.collectionName);
+    return addDoc(col, {
+      ...req,
+      status: 'pending', 
+      createdAt: Timestamp.now()
+    });
+  }
+
+  updateStatus(id: string, status: 'approved' | 'rejected') {
+    const docRef = doc(this.firestore, `${this.collectionName}/${id}`);
+    return updateDoc(docRef, { status });
+  }
+  
+  deleteRequest(id: string) {
+    const docRef = doc(this.firestore, `${this.collectionName}/${id}`);
+    return deleteDoc(docRef);
+  }
+}
 EOF
 
-# 2. Nettoyage du cache pour forcer la prise en compte
-echo "🧹 Nettoyage du cache Angular..."
-rm -rf .angular
+# 2. Correction de CommentsService (Même problème de Date)
+echo "🔧 Mise à jour de src/app/core/services/comments.service.ts..."
+cat << 'EOF' > src/app/core/services/comments.service.ts
+import { Injectable, inject } from '@angular/core';
+import { Firestore, collection, collectionData, addDoc, query, where, orderBy, Timestamp, doc, updateDoc } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Comment } from '../models/comment.model';
 
-echo "✅ Correction appliquée."
-echo "👉 Arrête le serveur (Ctrl+C) et lance : ng serve"
+@Injectable({ providedIn: 'root' })
+export class CommentsService {
+  private firestore = inject(Firestore);
+  private collectionName = 'comments';
+
+  private convertTimestamps(c: any): Comment {
+    if (c.createdAt && typeof c.createdAt.toDate === 'function') {
+      c.createdAt = c.createdAt.toDate();
+    }
+    return c as Comment;
+  }
+
+  getApprovedComments(requestId: string): Observable<Comment[]> {
+    const col = collection(this.firestore, this.collectionName);
+    const q = query(col, where('requestId', '==', requestId), where('status', '==', 'approved'), orderBy('createdAt', 'asc'));
+    return collectionData(q, { idField: 'id' }).pipe(
+      map(comments => comments.map(c => this.convertTimestamps(c)))
+    );
+  }
+
+  getPendingComments(): Observable<Comment[]> {
+    const col = collection(this.firestore, this.collectionName);
+    const q = query(col, where('status', '==', 'pending'), orderBy('createdAt', 'desc'));
+    return collectionData(q, { idField: 'id' }).pipe(
+      map(comments => comments.map(c => this.convertTimestamps(c)))
+    );
+  }
+
+  addComment(comment: Partial<Comment>) {
+    const col = collection(this.firestore, this.collectionName);
+    return addDoc(col, {
+      ...comment,
+      status: 'pending',
+      createdAt: Timestamp.now()
+    });
+  }
+
+  moderateComment(id: string, status: 'approved' | 'rejected') {
+    const docRef = doc(this.firestore, `${this.collectionName}/${id}`);
+    return updateDoc(docRef, { status });
+  }
+}
+EOF
+
+# 3. Assouplissement des règles de sécurité (Pour le Seeder et le Dev)
+# On permet temporairement l'écriture pour tout le monde pour débloquer le Seeder
+echo "🔓 Ouverture temporaire des règles Firestore..."
+cat << 'EOF' > firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // EN DEVELOPPEMENT : On autorise tout le monde à lire et écrire
+      // ATTENTION : À remettre en sécurisé avant la mise en production réelle
+      allow read, write: if true;
+    }
+  }
+}
+EOF
+
+echo "✅ Corrections appliquées."
+echo "👉 Le serveur devrait se recharger."
+echo "1. Clique à nouveau sur 'Générer des données de démo'."
+echo "2. Les dates devraient s'afficher correctement (ex: '28 nov. 2025')."

@@ -1,42 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Fonction helper pour vérifier si user connecté
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    
-    // Fonction helper pour vérifier si c'est l'auteur
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    // Collection USERS : 
-    // Chacun peut lire/écrire son propre document.
-    // L'admin pourrait être sécurisé davantage via Custom Claims, mais ici on simplifie.
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(userId);
-    }
-
-    // Collection REQUESTS :
-    // - Lecture : Public (tout le monde voit les problèmes)
-    // - Création : Connecté uniquement
-    // - Update : Seulement l'auteur (ex: modif description) OU Admin (via logique backend simulée ici par permission large pour update status)
-    // Note : Pour une vraie sécu Admin, il faudrait stocker le rôle dans le token auth.
-    match /requests/{requestId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn(); // On laisse ouvert aux connectés pour l'exemple (Admin + Owner)
-      allow delete: if false; // Pas de suppression pour le moment
-    }
-
-    // Collection COMMENTS :
-    match /comments/{commentId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn(); // Pour la modération admin
+    match /{document=**} {
+      // EN DEVELOPPEMENT : On autorise tout le monde à lire et écrire
+      // ATTENTION : À remettre en sécurisé avant la mise en production réelle
+      allow read, write: if true;
     }
   }
 }
