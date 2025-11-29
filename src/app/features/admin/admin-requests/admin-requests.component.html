@@ -1,45 +1,82 @@
-<div class="container mx-auto max-w-6xl">
-  <h2 class="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-    <span class="bg-indigo-100 text-indigo-600 p-2 rounded-lg">📢</span>
-    Validation des Signalements
-  </h2>
+<div class="container mx-auto max-w-6xl min-h-[60vh]">
+  
+  <div class="flex items-center justify-between mb-8">
+    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-3">
+      <span class="bg-yellow-100 text-yellow-600 p-2 rounded-lg text-xl">📢</span>
+      Modération des Signalements
+    </h2>
+    <a routerLink="/admin" class="text-sm text-slate-500 hover:text-emerald-600 font-medium transition">
+      &larr; Retour au Dashboard
+    </a>
+  </div>
 
   <div class="bg-white rounded-xl shadow border border-slate-200 overflow-hidden" *ngIf="pendingRequests$ | async as requests; else loading">
     
-    <div *ngIf="requests.length === 0" class="p-12 text-center text-slate-500">
-      <p class="text-lg">✅ Aucun signalement en attente.</p>
+    <div *ngIf="requests.length === 0" class="p-16 text-center">
+      <div class="text-6xl mb-4">✅</div>
+      <h3 class="text-xl font-bold text-slate-800">Aucun signalement en attente</h3>
+      <p class="text-slate-500 mt-2">Bon travail ! Tout est à jour.</p>
     </div>
 
     <div class="overflow-x-auto" *ngIf="requests.length > 0">
       <table class="w-full text-left border-collapse">
-        <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+        <thead class="bg-slate-50 text-slate-500 uppercase text-xs border-b border-slate-200">
           <tr>
-            <th class="p-4 font-semibold border-b border-slate-100">Signalement</th>
-            <th class="p-4 font-semibold border-b border-slate-100">Description</th>
-            <th class="p-4 font-semibold border-b border-slate-100">Date</th>
-            <th class="p-4 font-semibold border-b border-slate-100 text-right">Actions</th>
+            <th class="p-4 font-semibold">Photo</th>
+            <th class="p-4 font-semibold">Détails du problème</th>
+            <th class="p-4 font-semibold">Date / Auteur</th>
+            <th class="p-4 font-semibold text-right">Décision</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
           <tr *ngFor="let r of requests" class="hover:bg-slate-50 transition group">
-            <td class="p-4 min-w-[200px]">
-              <p class="text-slate-800 font-bold">{{ r.title }}</p>
-              <div class="text-xs text-slate-400 mt-1">
-                 📍 {{ r.lat | number:'1.2-2' }}, {{ r.lng | number:'1.2-2' }}
+            
+            <td class="p-4 w-24 align-top">
+              <div class="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 relative shrink-0">
+                <img *ngIf="r.imageUrl" [src]="r.imageUrl" class="w-full h-full object-cover" alt="Preuve">
+                <div *ngIf="!r.imageUrl" class="flex flex-col items-center justify-center h-full text-slate-400">
+                  <span class="text-xl">📷</span>
+                </div>
               </div>
             </td>
-            <td class="p-4 max-w-xs">
-              <p class="text-slate-600 text-sm line-clamp-2" title="{{ r.description }}">
+
+            <td class="p-4 max-w-sm align-top">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-200 text-slate-600">
+                  {{ r.category || 'Autre' }}
+                </span>
+                <span class="text-slate-900 font-bold text-lg leading-tight">{{ r.title }}</span>
+              </div>
+              <p class="text-slate-600 text-sm line-clamp-2 mb-2" title="{{ r.description }}">
                 {{ r.description }}
               </p>
+              <div class="text-xs text-slate-400 flex items-center gap-1">
+                 <span class="text-emerald-600">📍</span> {{ r.lat | number:'1.4-4' }}, {{ r.lng | number:'1.4-4' }}
+              </div>
             </td>
-            <td class="p-4 text-sm text-slate-500 whitespace-nowrap">
-              {{ r.createdAt | date:'shortDate' }}
+
+            <td class="p-4 text-sm text-slate-500 align-top whitespace-nowrap">
+              <div class="font-medium text-slate-700">{{ r.createdAt | date:'shortDate' }}</div>
+              <div class="text-xs">{{ r.createdAt | date:'shortTime' }}</div>
+              <div class="mt-1 text-xs bg-slate-100 px-2 py-1 rounded inline-block">
+                {{ r.authorEmail || 'Anonyme' }}
+              </div>
             </td>
-            <td class="p-4 text-right space-x-2 whitespace-nowrap">
-              <a [routerLink]="['/requests', r.id]" target="_blank" class="text-slate-400 hover:text-indigo-600 px-2 transition">👁️</a>
-              <button (click)="moderate(r.id, 'approved')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded text-xs font-bold hover:bg-emerald-200">Valider</button>
-              <button (click)="moderate(r.id, 'rejected')" class="bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200">Rejeter</button>
+
+            <td class="p-4 text-right align-middle whitespace-nowrap">
+              <div class="flex justify-end gap-2">
+                <a [routerLink]="['/requests', r.id]" target="_blank" class="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition border border-transparent hover:border-emerald-100" title="Voir le détail complet">
+                  👁️
+                </a>
+                
+                <button (click)="rejectRequest(r.id)" class="px-3 py-2 rounded-lg text-sm font-bold text-red-600 hover:bg-red-50 border border-red-200 hover:border-red-300 transition">
+                  Rejeter
+                </button>
+
+                <button (click)="validateRequest(r.id)" class="px-4 py-2 rounded-lg text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                  <span>✓</span> Valider
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -48,6 +85,9 @@
   </div>
 
   <ng-template #loading>
-    <div class="p-8 text-center text-slate-500">Chargement...</div>
+    <div class="flex flex-col justify-center items-center h-64 text-slate-400">
+      <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500 mb-4"></div>
+      <p>Chargement des signalements...</p>
+    </div>
   </ng-template>
 </div>

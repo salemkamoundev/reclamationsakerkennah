@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, user, GoogleAuthProvider, signInWithPopup } from '@angular/fire/auth';
+import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, user, GoogleAuthProvider, signInWithPopup, updateProfile } from '@angular/fire/auth';
 import { Firestore, doc, docData, setDoc, getDoc } from '@angular/fire/firestore';
 import { Observable, of, switchMap } from 'rxjs';
 
@@ -16,28 +16,35 @@ export class AuthService {
     switchMap(user => {
       if (!user) return of(false);
       const userDoc = doc(this.firestore, `users/${user.uid}`);
+      // Force le typage 'any'
       return docData(userDoc) as Observable<any>;
     }),
     switchMap(data => of(!!data?.isAdmin))
   );
 
-  // Connexion Email/Password
   async login(email: string, pass: string) {
     return await signInWithEmailAndPassword(this.auth, email, pass);
   }
 
-  // Inscription Email/Password
-  async register(email: string, pass: string) {
+  // MODIFIÉ : Accepte le nom en paramètre
+  async register(email: string, pass: string, name: string) {
     const creds = await createUserWithEmailAndPassword(this.auth, email, pass);
-    await this.createUserProfile(creds.user);
+    
+    // 1. Mettre à jour le profil Auth (le plus important pour les commentaires)
+    if (creds.user) {
+      await updateProfile(creds.user, { displayName: name });
+    }
+
+    // 2. Créer le document Firestore
+    await this.createUserProfile(creds.user, name);
+    
     return creds;
   }
 
-  // Connexion Google (Nouveau)
   async loginWithGoogle() {
     const provider = new GoogleAuthProvider();
     const creds = await signInWithPopup(this.auth, provider);
-    await this.createUserProfile(creds.user);
+    await this.createUserProfile(creds.user, creds.user.displayName || '');
     return creds;
   }
 
@@ -45,18 +52,16 @@ export class AuthService {
     return await signOut(this.auth);
   }
 
-  // Helper pour créer/mettre à jour le profil user dans Firestore
-  private async createUserProfile(user: any) {
+  private async createUserProfile(user: any, name: string = '') {
     const userDocRef = doc(this.firestore, `users/${user.uid}`);
     const userSnapshot = await getDoc(userDocRef);
 
-    // Si l'utilisateur n'existe pas encore dans Firestore, on le crée
     if (!userSnapshot.exists()) {
       await setDoc(userDocRef, { 
         email: user.email, 
         role: 'user', 
         createdAt: new Date(),
-        displayName: user.displayName || '',
+        displayName: name || user.displayName || '',
         photoURL: user.photoURL || ''
       });
     }

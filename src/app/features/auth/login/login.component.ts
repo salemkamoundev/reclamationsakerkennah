@@ -2,7 +2,6 @@ import { Component, inject } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-// CORRECTION : Import direct depuis le service, pas le composant
 import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
@@ -20,18 +19,27 @@ export class LoginComponent {
   errorMsg = '';
 
   form = this.fb.group({
+    name: [''], // Champ optionnel au départ
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]]
   });
 
   async submit() {
+    // Validation personnalisée : Le nom est requis SEULEMENT en mode inscription
+    if (this.isRegisterMode && !this.form.value.name) {
+      this.errorMsg = "Le nom est obligatoire pour l'inscription.";
+      return;
+    }
+
     if (this.form.invalid) return;
-    const { email, password } = this.form.value;
+    
+    const { email, password, name } = this.form.value;
     
     try {
       if (this.isRegisterMode) {
-        await this.auth.register(email!, password!);
-        this.toast.show('success', 'Compte créé avec succès !');
+        // On passe le nom
+        await this.auth.register(email!, password!, name!);
+        this.toast.show('success', 'Bienvenue ' + name + ' !');
       } else {
         await this.auth.login(email!, password!);
         this.toast.show('success', 'Connexion réussie.');
@@ -39,7 +47,7 @@ export class LoginComponent {
       this.router.navigate(['/requests']);
     } catch (err: any) {
       console.error(err);
-      this.errorMsg = "Erreur : " + this.translateFirebaseError(err.code);
+      this.errorMsg = this.translateFirebaseError(err.code);
     }
   }
 
@@ -64,7 +72,7 @@ export class LoginComponent {
       case 'auth/invalid-credential': return 'Email ou mot de passe incorrect.';
       case 'auth/email-already-in-use': return 'Cet email est déjà utilisé.';
       case 'auth/weak-password': return 'Le mot de passe est trop faible.';
-      default: return 'Une erreur est survenue.';
+      default: return 'Une erreur est survenue (' + code + ')';
     }
   }
 }
