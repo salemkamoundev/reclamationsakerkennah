@@ -17,29 +17,28 @@
         <a routerLink="/requests" routerLinkActive="text-emerald-400" [routerLinkActiveOptions]="{exact: true}" class="hover:text-emerald-400 transition">
           Signalements
         </a>
-        <a routerLink="/about" routerLinkActive="text-emerald-400" class="hover:text-emerald-400 transition hidden md:block">
-          À propos
-        </a>
         
         <ng-container *ngIf="auth.isAdmin$ | async">
-          <div class="hidden md:flex items-center space-x-4 border-l border-slate-700 pl-4 ml-2">
-            <span class="text-xs text-slate-500 uppercase tracking-widest font-bold">Admin</span>
-            <a routerLink="/admin" routerLinkActive="text-orange-400" [routerLinkActiveOptions]="{exact: true}" class="hover:text-orange-300 transition flex items-center gap-1">📊</a>
-            <a routerLink="/admin/requests" routerLinkActive="text-orange-400" class="hover:text-orange-300 transition flex items-center gap-1">📢</a>
-            <a routerLink="/admin/comments" routerLinkActive="text-orange-400" class="hover:text-orange-300 transition flex items-center gap-1">💬</a>
-          </div>
+          <a routerLink="/admin" 
+             routerLinkActive="bg-red-700 text-white" 
+             class="flex items-center gap-2 px-3 py-1.5 rounded bg-red-600/20 text-red-400 border border-red-900 hover:bg-red-600 hover:text-white transition">
+            <span>🛡️</span> Admin
+          </a>
         </ng-container>
 
         <ng-container *ngIf="auth.currentUser$ | async as user; else loginBtn">
           <div class="flex items-center space-x-4 border-l border-slate-700 pl-6">
-            <button (click)="logout()" class="text-slate-300 hover:text-white transition text-xs md:text-sm">Déconnexion</button>
             <a routerLink="/profile" class="flex items-center gap-2 group cursor-pointer" title="Mon Espace">
               <div class="w-8 h-8 rounded-full bg-emerald-700 group-hover:bg-emerald-600 transition flex items-center justify-center text-xs font-bold ring-2 ring-slate-800">
-                U
+                {{ user.displayName?.charAt(0) || user.email?.charAt(0) || 'U' | uppercase }}
               </div>
             </a>
+            <button (click)="logout()" class="text-slate-400 hover:text-white transition text-xs">
+              <span class="material-icons">logout</span>
+            </button>
           </div>
         </ng-container>
+
         <ng-template #loginBtn>
           <a routerLink="/login" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded transition shadow-md">Connexion</a>
         </ng-template>
