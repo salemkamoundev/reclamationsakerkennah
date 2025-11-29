@@ -4,7 +4,7 @@ import * as L from 'leaflet';
 @Component({
   selector: 'app-request-map',
   template: '<div id="map" class="h-full w-full rounded-lg shadow-inner border border-slate-300 z-0"></div>',
-  styles: [':host { display: block; height: 100%; width: 100%; min-height: 300px; }'], // CSS critique ajouté ici
+  styles: [':host { display: block; height: 100%; width: 100%; min-height: 300px; }'],
   standalone: false
 })
 export class RequestMapComponent implements AfterViewInit, OnChanges {
@@ -27,7 +27,6 @@ export class RequestMapComponent implements AfterViewInit, OnChanges {
     if (changes['lat'] || changes['lng']) this.refreshSingleMarker();
     if (changes['requests'] && this.requests) this.refreshMultipleMarkers();
     
-    // Hack Leaflet : Forcer le redimensionnement si les données changent
     setTimeout(() => { this.map.invalidateSize(); }, 200);
   }
 
@@ -60,10 +59,7 @@ export class RequestMapComponent implements AfterViewInit, OnChanges {
       });
     }
 
-    // LE FIX CRITIQUE : On attend un peu que le DOM soit dessiné, puis on force Leaflet à recalculer sa taille
-    setTimeout(() => {
-      this.map.invalidateSize();
-    }, 500);
+    setTimeout(() => { this.map.invalidateSize(); }, 500);
   }
 
   private refreshSingleMarker() {
@@ -79,13 +75,38 @@ export class RequestMapComponent implements AfterViewInit, OnChanges {
         return; 
     }
     const bounds = L.latLngBounds([]);
+    
     this.requests.forEach(req => {
       const marker = L.marker([req.lat, req.lng]);
-      const popup = '<b>' + req.title + '</b><br><a href="/requests/' + req.id + '">Voir</a>';
-      marker.bindPopup(popup);
+      
+      // --- CONSTRUCTION DU POPUP RICHE ---
+      
+      // 1. Image (si existe)
+      let imgHtml = '';
+      if (req.imageUrl) {
+        imgHtml = '<img src="' + req.imageUrl + '" style="width:100%; height:100px; object-fit:cover; border-radius: 4px; margin-bottom: 8px;">';
+      }
+
+      // 2. Description (Tronquée à 60 caractères)
+      let desc = req.description || '';
+      if (desc.length > 60) {
+        desc = desc.substring(0, 60) + '...';
+      }
+
+      // 3. Assemblage HTML (Inline styles obligatoires pour Leaflet)
+      const popupContent = 
+        '<div style="width: 200px; text-align: left;">' +
+           imgHtml +
+           '<h3 style="font-weight: bold; margin: 0 0 4px 0; font-size: 14px; color: #0f172a;">' + req.title + '</h3>' +
+           '<p style="font-size: 12px; color: #64748b; margin: 0 0 8px 0; line-height: 1.4;">' + desc + '</p>' +
+           '<a href="/requests/' + req.id + '" style="display: block; text-align: center; background-color: #10b981; color: white; padding: 6px 0; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: bold;">Voir le détail</a>' +
+        '</div>';
+
+      marker.bindPopup(popupContent);
       this.markersLayer.addLayer(marker);
       bounds.extend([req.lat, req.lng]);
     });
-    if (bounds.isValid()) this.map.fitBounds(bounds, { padding: [50, 50] });
+
+    if (bounds.isValid()) this.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
   }
 }
