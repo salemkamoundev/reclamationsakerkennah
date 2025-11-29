@@ -28,6 +28,7 @@ import { AdminDashboardComponent } from './features/admin/admin-dashboard/admin-
 import { ToastComponent } from './shared/components/toast/toast.component';
 import { NotFoundComponent } from './core/components/not-found/not-found.component';
 import { AboutComponent } from './features/about/about.component';
+import { OnboardingComponent } from './features/onboarding/onboarding.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,8 @@ import { AboutComponent } from './features/about/about.component';
     AdminDashboardComponent,
     ToastComponent,
     NotFoundComponent,
-    AboutComponent
+    AboutComponent,
+    OnboardingComponent
   ],
   imports: [
     BrowserModule,
@@ -60,7 +62,6 @@ import { AboutComponent } from './features/about/about.component';
   ],
   providers: [
     UpperCasePipe,
-    // C'EST ICI QUE CA DOIT ETRE :
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
