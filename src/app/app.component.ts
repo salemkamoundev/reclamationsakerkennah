@@ -12,7 +12,11 @@ export class AppComponent {
   private router = inject(Router);
 
   async logout() {
-    await this.auth.logout();
-    this.router.navigate(['/login']);
+    try {
+      await this.auth.logout();
+      this.router.navigate(['/login']);
+    } catch (e) {
+      console.error("Erreur déconnexion", e);
+    }
   }
 }

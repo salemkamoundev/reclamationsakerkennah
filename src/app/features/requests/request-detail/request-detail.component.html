@@ -24,6 +24,7 @@
   <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
     
     <div class="md:col-span-2 space-y-6">
+      
       <div *ngIf="req.imageUrl" class="bg-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-700">
         <img [src]="req.imageUrl" class="w-full max-h-[400px] object-contain mx-auto" alt="Preuve photo">
       </div>
@@ -35,11 +36,15 @@
 
       <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
         <h3 class="font-bold text-slate-800 mb-4">Localisation</h3>
-        <app-request-map 
-            [lat]="req.lat" 
-            [lng]="req.lng" 
-            [readonly]="true">
-        </app-request-map>
+        
+        <div class="h-[400px] w-full rounded-lg overflow-hidden border border-slate-200 relative z-0">
+            <app-request-map 
+                [lat]="req.lat" 
+                [lng]="req.lng" 
+                [readonly]="true">
+            </app-request-map>
+        </div>
+        
         <p class="text-xs text-slate-400 mt-2 text-right">GPS: {{req.lat | number:'1.4-4'}}, {{req.lng | number:'1.4-4'}}</p>
       </div>
     </div>
@@ -47,10 +52,7 @@
     <div class="space-y-6">
       <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 h-full flex flex-col">
         <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-          Commentaires 
-          <span class="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full" *ngIf="comments$ | async as comments">
-            {{ comments.length }}
-          </span>
+          Commentaires <span class="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full" *ngIf="comments$ | async as comments">{{ comments.length }}</span>
         </h3>
 
         <div class="space-y-4 flex-grow overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
@@ -64,11 +66,9 @@
                   {{ comment.createdAt | date:'short' }}
                 </span>
               </div>
-              
               <p class="text-slate-700 leading-snug">{{ comment.content }}</p>
             </div>
           </ng-container>
-          
           <div *ngIf="(comments$ | async)?.length === 0" class="text-center text-slate-400 italic py-4">
             Aucun commentaire pour le moment.
           </div>
@@ -76,20 +76,14 @@
 
         <div class="mt-6 border-t border-slate-200 pt-4">
           <ng-container *ngIf="auth.currentUser$ | async; else loginToComment">
-            <textarea 
-              [(ngModel)]="newCommentContent" 
-              class="w-full p-3 rounded border border-slate-300 focus:ring-2 focus:ring-emerald-500 text-sm mb-2 outline-none transition"
-              rows="3"
-              placeholder="Ajouter un commentaire..."></textarea>
-            <button (click)="addComment(req.id!)" 
-              [disabled]="!newCommentContent.trim() || isSubmitting"
-              class="w-full bg-slate-900 text-white py-2 rounded text-sm hover:bg-slate-800 disabled:opacity-50 transition font-medium">
+            <textarea [(ngModel)]="newCommentContent" class="w-full p-3 rounded border border-slate-300 focus:ring-2 focus:ring-emerald-500 text-sm mb-2 outline-none" rows="3" placeholder="Ajouter un commentaire..."></textarea>
+            <button (click)="addComment(req.id!)" [disabled]="!newCommentContent.trim() || isSubmitting" class="w-full bg-slate-900 text-white py-2 rounded text-sm hover:bg-slate-800 disabled:opacity-50 transition">
               {{ isSubmitting ? 'Envoi...' : 'Publier' }}
             </button>
           </ng-container>
           <ng-template #loginToComment>
             <p class="text-sm text-center text-slate-500 bg-white p-3 rounded border border-slate-100">
-              <a routerLink="/login" class="text-emerald-600 font-bold hover:underline">Connectez-vous</a> pour participer à la discussion.
+              <a routerLink="/login" class="text-emerald-600 font-bold hover:underline">Connectez-vous</a> pour participer.
             </p>
           </ng-template>
         </div>
